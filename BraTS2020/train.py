@@ -18,6 +18,7 @@ from guided_diffusion.respace import SpacedDiffusion, space_timesteps
 from guided_diffusion.resample import UniformSampler
 set_determinism(123)
 import os
+##
 
 data_dir = "./datasets/brats2020/MICCAI_BraTS2020_TrainingData/"
 logdir = "./logs_brats/diffusion_seg_all_loss_embed/"
