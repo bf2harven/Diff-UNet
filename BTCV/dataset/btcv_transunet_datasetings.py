@@ -156,7 +156,7 @@ def get_loader_btcv(data_dir, cache=True):
                         "0003" in p[0] or \
                             "0001" in p[0] or "0004" in p[0] or \
                                 "0025" in p[0] or "0035" in p[0]:
-            
+
             val_files.append(p)
         else :
             train_files.append(p)
@@ -177,7 +177,7 @@ def get_loader_btcv(data_dir, cache=True):
                 image_key="image",
                 image_threshold=0,
             ),
-            
+
             transforms.RandFlipd(keys=["image", "label"], prob=0.2, spatial_axis=0),
             transforms.RandFlipd(keys=["image", "label"], prob=0.2, spatial_axis=1),
             transforms.RandFlipd(keys=["image", "label"], prob=0.2, spatial_axis=2),
@@ -194,7 +194,7 @@ def get_loader_btcv(data_dir, cache=True):
                 keys=["image"], a_min=-175, a_max=250.0, b_min=0, b_max=1.0, clip=True
             ),
             transforms.CropForegroundd(keys=["image", "label"], source_key="image"),
-            
+
             transforms.ToTensord(keys=["image", "label"]),
         ]
     )
@@ -214,6 +214,4 @@ def get_loader_btcv(data_dir, cache=True):
 
     test_ds = PretrainDataset(val_files, transform=test_transform)
 
-    loader = [train_ds, val_ds, test_ds]
-
-    return loader
+    return [train_ds, val_ds, test_ds]

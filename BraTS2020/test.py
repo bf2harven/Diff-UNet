@@ -32,8 +32,7 @@ number_targets = 3 ## WT, TC, ET
 def compute_uncer(pred_out):
     pred_out = torch.sigmoid(pred_out)
     pred_out[pred_out < 0.001] = 0.001
-    uncer_out = - pred_out * torch.log(pred_out)
-    return uncer_out
+    return - pred_out * torch.log(pred_out)
 
 class DiffUNet(nn.Module):
     def __init__(self) -> None:
@@ -73,22 +72,26 @@ class DiffUNet(nn.Module):
             embeddings = self.embed_model(image)
 
             uncer_step = 4
-            sample_outputs = []
-            for i in range(uncer_step):
-                sample_outputs.append(self.sample_diffusion.ddim_sample_loop(self.model, (1, number_targets, 96, 96, 96), model_kwargs={"image": image, "embeddings": embeddings}))
-
+            sample_outputs = [
+                self.sample_diffusion.ddim_sample_loop(
+                    self.model,
+                    (1, number_targets, 96, 96, 96),
+                    model_kwargs={"image": image, "embeddings": embeddings},
+                )
+                for _ in range(uncer_step)
+            ]
             sample_return = torch.zeros((1, number_targets, 96, 96, 96))
 
             for index in range(10):
-# 
-                uncer_out = 0
-                for i in range(uncer_step):
-                    uncer_out += sample_outputs[i]["all_model_outputs"][index]
+                uncer_out = sum(
+                    sample_outputs[i]["all_model_outputs"][index]
+                    for i in range(uncer_step)
+                )
                 uncer_out = uncer_out / uncer_step
                 uncer = compute_uncer(uncer_out).cpu()
 
                 w = torch.exp(torch.sigmoid(torch.tensor((index + 1) / 10)) * (1 - uncer))
-              
+
                 for i in range(uncer_step):
                     sample_return += w * sample_outputs[i]["all_samples"][index].cpu()
 

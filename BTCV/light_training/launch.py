@@ -26,7 +26,7 @@ def fetch_hostfile(hostfile_path):
     # e.g., worker-0 slots=16
     with open(hostfile_path, 'r') as fd:
         resource_pool = collections.OrderedDict()
-        for line in fd.readlines():
+        for line in fd:
             line = line.strip()
             if line == '':
                 # skip empty lines
@@ -54,14 +54,11 @@ def cmd_load_hyperparam(config_path=None, format="json", encoding="utf-8"):
         if format == "json":
             config_dict = json.load(f)
         else:
-            raise NameError("current format%s for hyperparam file is invalid" %
-                            format)
+            raise NameError(f"current format{format} for hyperparam file is invalid")
     config_cmd = []
     for key in config_dict:
-        if len(str(config_dict[key])) == 0:
-            config_cmd.append('--' + key)
-        else:
-            config_cmd.append('--' + key)
+        config_cmd.append(f'--{key}')
+        if str(config_dict[key]) != "":
             config_cmd.append(str(config_dict[key]))
     return config_cmd
 

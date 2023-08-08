@@ -5,8 +5,7 @@ import torch
 
 def delete_last_model(model_dir, symbol):
 
-    last_model = glob.glob(f"{model_dir}/{symbol}*.pt")
-    if len(last_model) != 0:
+    if last_model := glob.glob(f"{model_dir}/{symbol}*.pt"):
         os.remove(last_model[0])
 
 

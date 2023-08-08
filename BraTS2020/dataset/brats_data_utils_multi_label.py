@@ -128,12 +128,8 @@ def get_kfold_data(data_paths, n_splits, shuffle=False):
     kfold = KFold(n_splits=n_splits, shuffle=shuffle)  ## kfold为KFolf类的一个对象
     return_res = []
     for a, b in kfold.split(X):
-        fold_train = []
-        fold_val = []
-        for i in a:
-            fold_train.append(data_paths[i])
-        for j in b:
-            fold_val.append(data_paths[j])
+        fold_train = [data_paths[i] for i in a]
+        fold_val = [data_paths[j] for j in b]
         return_res.append({"train_data": fold_train, "val_data": fold_val})
 
     return return_res
@@ -148,7 +144,7 @@ def get_loader_brats(data_dir, batch_size=1, fold=0, num_workers=8):
 
     all_dirs = os.listdir(data_dir)
     all_paths = [os.path.join(data_dir, d) for d in all_dirs]
-   
+
     size = len(all_paths)
     train_size = int(0.7 * size)
     val_size = int(0.1 * size)
@@ -169,7 +165,7 @@ def get_loader_brats(data_dir, batch_size=1, fold=0, num_workers=8):
             transforms.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=1),
             transforms.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=2),
             transforms.NormalizeIntensityd(keys="image", nonzero=True, channel_wise=True),
-            
+
             transforms.RandScaleIntensityd(keys="image", factors=0.1, prob=1.0),
             transforms.RandShiftIntensityd(keys="image", offsets=0.1, prob=1.0),
             transforms.ToTensord(keys=["image", "label"],),
@@ -187,10 +183,8 @@ def get_loader_brats(data_dir, batch_size=1, fold=0, num_workers=8):
     train_ds = PretrainDataset(train_files, transform=train_transform)
 
     val_ds = PretrainDataset(val_files, transform=val_transform)
-    
+
 
     test_ds = PretrainDataset(test_files, transform=val_transform)
 
-    loader = [train_ds, val_ds, test_ds]
-
-    return loader
+    return [train_ds, val_ds, test_ds]

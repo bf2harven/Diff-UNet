@@ -51,7 +51,7 @@ class Trainer:
         self.batch_size = batch_size
         self.not_call_launch = True
         self.logdir = logdir
-        self.scheduler = None 
+        self.scheduler = None
         self.model = None
         self.auto_optim = True
 
@@ -63,7 +63,7 @@ class Trainer:
             print("gpu数量不符")
             os._exit(0)
 
-        if env_type == "DDP" or env_type == "ddp":
+        if env_type in ["DDP", "ddp"]:
             self.ddp = True
             self.get_dist_args()
             if not self.not_call_launch:
@@ -111,17 +111,18 @@ class Trainer:
                                 batch_size=batch_size,
                                 shuffle=shuffle,
                                 num_workers=12)
-        else :
-            if not train:
-                sampler = SequentialDistributedSampler(dataset, batch_size=batch_size)
-
-            else :
-                sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
-            return DataLoader(dataset,
-                                batch_size=batch_size,
-                                num_workers=12, 
-                                sampler=sampler, 
-                                drop_last=False)
+        sampler = (
+            SequentialDistributedSampler(dataset, batch_size=batch_size)
+            if not train
+            else torch.utils.data.distributed.DistributedSampler(
+                dataset, shuffle=True
+            )
+        )
+        return DataLoader(dataset,
+                            batch_size=batch_size,
+                            num_workers=12, 
+                            sampler=sampler, 
+                            drop_last=False)
 
     def get_dist_args(self):
         parser = argparse.ArgumentParser()
@@ -142,7 +143,7 @@ class Trainer:
 
     def validation_single_gpu(self, val_dataset,):
         if self.ddp:
-            print(f"single gpu model not support the ddp")
+            print("single gpu model not support the ddp")
             exit(0)
         val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
         self.model.to(self.device)
@@ -159,7 +160,7 @@ class Trainer:
 
             elif isinstance(batch, torch.Tensor):
                 batch = batch.to(self.device)
-            
+
             else :
                 print("not support data type")
                 exit(0)
@@ -170,7 +171,7 @@ class Trainer:
 
             return_list = False
             val_outputs.append(val_out)
-        if isinstance(val_out, list) or isinstance(val_out, tuple):
+        if isinstance(val_out, (list, tuple)):
             return_list = True
 
         val_outputs = torch.tensor(val_outputs)
@@ -183,14 +184,11 @@ class Trainer:
                     v_sum += v
                     length += 1
 
-            if length == 0:
-                v_sum = 0
-            else :
-                v_sum = v_sum / length             
-        else :
+            v_sum = 0 if length == 0 else v_sum / length
+        else:
             num_val = len(val_outputs[0])
-            length = [0.0 for i in range(num_val)]
-            v_sum = [0.0 for i in range(num_val)]
+            length = [0.0 for _ in range(num_val)]
+            v_sum = [0.0 for _ in range(num_val)]
 
             for v in val_outputs:
                 for i in range(num_val):
@@ -199,10 +197,7 @@ class Trainer:
                         length[i] += 1
 
             for i in range(num_val):
-                if length[i] == 0:
-                    v_sum[i] = 0
-                else :
-                    v_sum[i] = v_sum[i] / length[i]
+                v_sum[i] = 0 if length[i] == 0 else v_sum[i] / length[i]
         return v_sum, val_outputs
 
     def train(self,
@@ -220,7 +215,7 @@ class Trainer:
         set_determinism(1234 + self.local_rank)
         if self.model is not None:
             print(f"check model parameter: {next(self.model.parameters()).sum()}")
-            para = sum([np.prod(list(p.size())) for p in self.model.parameters()])
+            para = sum(np.prod(list(p.size())) for p in self.model.parameters())
             if self.local_rank == 0:
                 print(f"model parameters is {para * 4 / 1000 / 1000}M ")
         self.global_step = 0
@@ -243,7 +238,7 @@ class Trainer:
                                                                     device_ids=[self.local_rank],
                                                                     output_device=self.local_rank,
                                                                     find_unused_parameters=True)
-         
+
         else :
             print("not support env_type")
             exit(0)
@@ -253,9 +248,9 @@ class Trainer:
             val_loader = self.get_dataloader(val_dataset, shuffle=False, batch_size=1, train=False)
         else :
             val_loader = None 
-            
+
         for epoch in range(0, self.max_epochs):
-            self.epoch = epoch 
+            self.epoch = epoch
             if self.ddp:
                 train_loader.sampler.set_epoch(epoch)
                 torch.distributed.barrier()
@@ -263,10 +258,10 @@ class Trainer:
                             train_loader,
                             epoch,
                             )
-            
+
             val_outputs = []
             if (epoch+1) % self.val_every == 0 \
-                    and val_loader is not None :
+                        and val_loader is not None:
                 if self.model is not None:
                     self.model.eval()
                 if self.ddp:
@@ -282,7 +277,7 @@ class Trainer:
 
                     elif isinstance(batch, torch.Tensor):
                         batch = batch.to(self.device)
-                    
+
                     else :
                         print("not support data type")
                         exit(0)
@@ -293,7 +288,7 @@ class Trainer:
 
                     return_list = False
                     val_outputs.append(val_out)
-                    if isinstance(val_out, list) or isinstance(val_out, tuple):
+                    if isinstance(val_out, (list, tuple)):
                         return_list = True
 
                 ## 先汇总结果。
@@ -303,7 +298,7 @@ class Trainer:
                     # gather_val_outputs = [torch.zeros_like(val_outputs) for _ in range(self.world_size)]
                     # torch.distributed.all_gather(gather_val_outputs, val_outputs)
                     # val_outputs = torch.cat(gather_val_outputs, dim=0)
-                    
+
                     val_outputs = distributed_concat(val_outputs, num_total_examples=len(val_loader.sampler.dataset))
                 else :
                     val_outputs = torch.tensor(val_outputs)
@@ -318,16 +313,11 @@ class Trainer:
                                 v_sum += v
                                 length += 1
 
-                        if length == 0:
-                            v_sum = 0
-                        else :
-                            v_sum = v_sum / length 
-                        self.validation_end(mean_val_outputs=v_sum)
-                    
-                    else :
+                        v_sum = 0 if length == 0 else v_sum / length
+                    else:
                         num_val = len(val_outputs[0])
-                        length = [0.0 for i in range(num_val)]
-                        v_sum = [0.0 for i in range(num_val)]
+                        length = [0.0 for _ in range(num_val)]
+                        v_sum = [0.0 for _ in range(num_val)]
 
                         for v in val_outputs:
                             for i in range(num_val):
@@ -336,12 +326,8 @@ class Trainer:
                                     length[i] += 1
 
                         for i in range(num_val):
-                            if length[i] == 0:
-                                v_sum[i] = 0
-                            else :
-                                v_sum[i] = v_sum[i] / length[i]
-
-                        self.validation_end(mean_val_outputs=v_sum)
+                            v_sum[i] = 0 if length[i] == 0 else v_sum[i] / length[i]
+                    self.validation_end(mean_val_outputs=v_sum)
 
             if self.scheduler is not None:
                 self.scheduler.step()
@@ -426,12 +412,12 @@ class Trainer:
 
 
     def log(self, k, v, step):
-        if self.env_type == "pytorch":
+        if (
+            self.env_type != "pytorch"
+            and self.local_rank == 0
+            or self.env_type == "pytorch"
+        ):
             self.writer.add_scalar(k, scalar_value=v, global_step=step)
-
-        else :
-            if self.local_rank == 0:
-                self.writer.add_scalar(k, scalar_value=v, global_step=step)
 
     def load_state_dict(self, weight_path, strict=True):
         sd = torch.load(weight_path, map_location="cpu")
@@ -444,6 +430,6 @@ class Trainer:
             new_sd[new_k] = v 
 
         self.model.load_state_dict(new_sd, strict=strict)
-        
-        print(f"model parameters are loaded successed.")
+
+        print("model parameters are loaded successed.")
 
