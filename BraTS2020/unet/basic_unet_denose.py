@@ -335,7 +335,7 @@ class BasicUNetDe(nn.Module):
 
         if image is not None :
             x = torch.cat([image, x], dim=1)
-            
+
         x0 = self.conv_0(x, temb)
         if embeddings is not None:
             x0 += embeddings[0]
@@ -361,8 +361,7 @@ class BasicUNetDe(nn.Module):
         u2 = self.upcat_2(u3, x1, temb)
         u1 = self.upcat_1(u2, x0, temb)
 
-        logits = self.final_conv(u1)
-        return logits
+        return self.final_conv(u1)
 
 
 

@@ -26,9 +26,7 @@ data_dir = "./RawData/Training/"
 def compute_uncer(pred_out):
     pred_out = torch.sigmoid(pred_out)
     pred_out[pred_out < 0.01] = 0.01
-    uncer_out = - pred_out * torch.log(pred_out)
-
-    return uncer_out
+    return - pred_out * torch.log(pred_out)
 
 class DiffUNet(nn.Module):
     def __init__(self) -> None:
@@ -68,11 +66,8 @@ class DiffUNet(nn.Module):
 
             sample_return = torch.zeros((1, 13, 96, 96, 96))
             all_samples = sample_out["all_samples"]
-            index = 0
             for sample in all_samples:
                 sample_return += sample.cpu()
-                index += 1
-
             return sample_return
 
 
@@ -100,16 +95,13 @@ class BraTSTrainer(Trainer):
         return image, label 
 
     def convert_labels(self, labels):
-        labels_new = []
-        for i in range(1, 14):
-            labels_new.append(labels == i)
-        
+        labels_new = [labels == i for i in range(1, 14)]
         labels_new = torch.cat(labels_new, dim=1)
         return labels_new
 
     def validation_step(self, batch):
         image, label = self.get_input(batch)    
-        
+
         output = self.window_infer(image, self.model, pred_type="ddim_sample")
         output = torch.sigmoid(output)
         output = (output > 0.5).float().cpu()
@@ -140,12 +132,9 @@ class BraTSTrainer(Trainer):
 
             dices.append(dice)
             hd.append(hd95)
-        
-        all_m = []
-        for d in dices:
-            all_m.append(d)
-        for h in hd:
-            all_m.append(h)
+
+        all_m = list(dices)
+        all_m.extend(iter(hd))
         print(all_m)
         return all_m 
 

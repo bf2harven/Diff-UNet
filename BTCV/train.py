@@ -124,10 +124,7 @@ class BraTSTrainer(Trainer):
         return image, label 
 
     def convert_labels(self, labels):
-        labels_new = []
-        for i in range(1, 14):
-            labels_new.append(labels == i)
-        
+        labels_new = [labels == i for i in range(1, 14)]
         labels_new = torch.cat(labels_new, dim=1)
         return labels_new
 

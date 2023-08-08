@@ -18,8 +18,9 @@ from medpy import metric
 
 def assert_shape(test, reference):
 
-    assert test.shape == reference.shape, "Shape mismatch: {} and {}".format(
-        test.shape, reference.shape)
+    assert (
+        test.shape == reference.shape
+    ), f"Shape mismatch: {test.shape} and {reference.shape}"
 
 
 class ConfusionMatrix:
@@ -112,11 +113,7 @@ def dice(test=None, reference=None, confusion_matrix=None, nan_for_nonexisting=T
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if test_empty and reference_empty:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0.
-
+        return float("NaN") if nan_for_nonexisting else 0.
     return float(2. * tp / (2 * tp + fp + fn))
 
 
@@ -130,11 +127,7 @@ def jaccard(test=None, reference=None, confusion_matrix=None, nan_for_nonexistin
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if test_empty and reference_empty:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0.
-
+        return float("NaN") if nan_for_nonexisting else 0.
     return float(tp / (tp + fp + fn))
 
 
@@ -148,11 +141,7 @@ def precision(test=None, reference=None, confusion_matrix=None, nan_for_nonexist
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if test_empty:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0.
-
+        return float("NaN") if nan_for_nonexisting else 0.
     return float(tp / (tp + fp))
 
 
@@ -166,11 +155,7 @@ def sensitivity(test=None, reference=None, confusion_matrix=None, nan_for_nonexi
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if reference_empty:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0.
-
+        return float("NaN") if nan_for_nonexisting else 0.
     return float(tp / (tp + fn))
 
 
@@ -190,11 +175,7 @@ def specificity(test=None, reference=None, confusion_matrix=None, nan_for_nonexi
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if reference_full:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0.
-
+        return float("NaN") if nan_for_nonexisting else 0.
     return float(tn / (tn + fp))
 
 
@@ -235,11 +216,7 @@ def false_omission_rate(test=None, reference=None, confusion_matrix=None, nan_fo
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if test_full:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0.
-
+        return float("NaN") if nan_for_nonexisting else 0.
     return float(fn / (fn + tn))
 
 
@@ -319,11 +296,7 @@ def hausdorff_distance(test=None, reference=None, confusion_matrix=None, nan_for
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if test_empty or test_full or reference_empty or reference_full:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0
-
+        return float("NaN") if nan_for_nonexisting else 0
     test, reference = confusion_matrix.test, confusion_matrix.reference
 
     return metric.hd(test, reference, voxel_spacing, connectivity)
@@ -337,11 +310,7 @@ def hausdorff_distance_95(test=None, reference=None, confusion_matrix=None, nan_
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if test_empty or test_full or reference_empty or reference_full:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0
-
+        return float("NaN") if nan_for_nonexisting else 0
     test, reference = confusion_matrix.test, confusion_matrix.reference
 
     return metric.hd95(test, reference, voxel_spacing, connectivity)
@@ -355,11 +324,7 @@ def avg_surface_distance(test=None, reference=None, confusion_matrix=None, nan_f
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if test_empty or test_full or reference_empty or reference_full:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0
-
+        return float("NaN") if nan_for_nonexisting else 0
     test, reference = confusion_matrix.test, confusion_matrix.reference
 
     return metric.asd(test, reference, voxel_spacing, connectivity)
@@ -373,11 +338,7 @@ def avg_surface_distance_symmetric(test=None, reference=None, confusion_matrix=N
     test_empty, test_full, reference_empty, reference_full = confusion_matrix.get_existence()
 
     if test_empty or test_full or reference_empty or reference_full:
-        if nan_for_nonexisting:
-            return float("NaN")
-        else:
-            return 0
-
+        return float("NaN") if nan_for_nonexisting else 0
     test, reference = confusion_matrix.test, confusion_matrix.reference
 
     return metric.assd(test, reference, voxel_spacing, connectivity)

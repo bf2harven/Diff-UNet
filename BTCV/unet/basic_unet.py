@@ -283,11 +283,8 @@ class BasicUNet(nn.Module):
             A torch Tensor of "raw" predictions in shape
             ``(Batch, out_channels, dim_0[, dim_1, ..., dim_N])``.
         """
-        embeddings = []
-
         x0 = self.conv_0(x)
-        embeddings.append(x0)
-
+        embeddings = [x0]
         x1 = self.down_1(x0)
         embeddings.append(x1)
 
